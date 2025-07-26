@@ -5,15 +5,14 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USERNAME = 'ravikumar1997'
         IMAGE_NAME = 'trend-app'
-        IMAGE_TAG = 'latest'
+        IMAGE_TAG = "latest"
         AWS_DEFAULT_REGION = 'us-east-1'
-        CLUSTER_NAME = 'trend-app-cluster'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Vennilavan12/Trend.git'
+                git branch: 'main', url: 'https://github.com/Ravikumar-hub97/aws-project-trend-app.git'
             }
         }
         
@@ -36,7 +35,7 @@ pipeline {
             }
         }
         
-        stage('Deploy to Kubernetes') {
+stage('Deploy to Kubernetes') {
             steps {
                 script {
                     sh '''
