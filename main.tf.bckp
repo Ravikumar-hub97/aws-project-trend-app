@@ -1,0 +1,48 @@
+provider "aws" {
+  region = "us-east-1"
+}
+
+# VPC, Subnet, Security Groups (simplified)
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  name    = "trend-vpc"
+  cidr    = "10.0.0.0/16"
+  azs     = ["us-east-1a", "us-east-1b"]
+  private_subnets = ["10.0.1.0/24", "10.0.2.0/24"]
+  public_subnets  = ["10.0.3.0/24", "10.0.4.0/24"]
+  enable_nat_gateway = true
+  single_nat_gateway = true
+  tags = {
+    Name = "trend-vpc"
+  }
+}
+
+resource "aws_instance" "jenkins" {
+  ami           = "ami-0c02fb55956c7d316"  # Make sure it's valid for your region
+  instance_type = "t2.medium"
+  subnet_id     = module.vpc.public_subnets[0]
+  key_name      = "ec2-key-pair"
+  tags = {
+    Name = "jenkins-server"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    private_key = file("~/ec2-key-pair.pem")
+    host        = self.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo apt update",
+      "sudo apt install -y docker.io openjdk-11-jdk",
+      "sudo usermod -aG docker ubuntu",
+      "curl -fsSL https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null",
+      "echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null",
+      "sudo apt update",
+      "sudo apt install -y jenkins",
+      "sudo systemctl start jenkins"
+    ]
+  }
+}
