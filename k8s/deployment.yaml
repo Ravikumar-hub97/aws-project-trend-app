@@ -16,7 +16,7 @@ spec:
         app: trend-app
     spec:
       containers:
-      - name: trend-project-repo
+      - name: trend-app
         image: ravikumar1997/trend-app:latest
         ports:
         - containerPort: 3000
