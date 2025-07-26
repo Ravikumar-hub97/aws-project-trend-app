@@ -4,7 +4,7 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USERNAME = 'ravikumar1997'
-        IMAGE_NAME = 'trend-project-repo'
+        IMAGE_NAME = 'trend-app'
         IMAGE_TAG = "latest"
         AWS_DEFAULT_REGION = 'us-east-1'
     }
@@ -20,7 +20,6 @@ pipeline {
             steps {
                 script {
                     dockerImage = docker.build("${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG}")
-                    dockerImage.tag("${DOCKERHUB_USERNAME}/${IMAGE_NAME}:latest")
                 }
             }
         }
