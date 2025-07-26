@@ -8,6 +8,10 @@ pipeline {
         IMAGE_TAG = "latest"
         AWS_DEFAULT_REGION = 'us-east-1'
     }
+    triggers {
+        githubPush()
+    }
+
 
     stages {
         stage('Checkout') {
