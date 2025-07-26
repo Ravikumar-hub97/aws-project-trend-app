@@ -40,7 +40,7 @@ stage('Deploy to Kubernetes') {
                 script {
                     sh '''
                         # Configure kubectl for EKS
-                        aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name ${CLUSTER_NAME}
+                        aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name trend-app-cluster
                         
                         # Verify connection
                         kubectl get nodes
