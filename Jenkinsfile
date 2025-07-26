@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USERNAME = 'ravikumar1997'
@@ -8,14 +8,14 @@ pipeline {
         IMAGE_TAG = "latest"
         AWS_DEFAULT_REGION = 'us-east-1'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Ravikumar-hub97/aws-project-trend-app.git'
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -23,7 +23,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push to DockerHub') {
             steps {
                 script {
@@ -34,37 +34,38 @@ pipeline {
                 }
             }
         }
-        
-stage('Deploy to Kubernetes') {
-    steps {
-        script {
-            sh '''
-                # Use ec2-user environment where kubectl works
-                sudo -u ec2-user aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name trend-app-cluster
 
-                # Verify connection
-                sudo -u ec2-user kubectl get nodes
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh '''
+                        # Use ec2-user environment where kubectl works
+                        sudo -u ec2-user aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name trend-app-cluster
 
-                # Replace placeholders in deployment.yaml
-                sudo -u ec2-user sed -i "s|YOUR_DOCKERHUB_USERNAME|${DOCKERHUB_USERNAME}|g" k8s/deployment.yaml
-                sudo -u ec2-user sed -i "s|:latest|:${IMAGE_TAG}|g" k8s/deployment.yaml
+                        # Verify connection
+                        sudo -u ec2-user kubectl get nodes
 
-                # Apply Kubernetes manifests
-                sudo -u ec2-user kubectl apply -f k8s/namespace.yaml --validate=false
-                sudo -u ec2-user kubectl apply -f k8s/deployment.yaml --validate=false
-                sudo -u ec2-user kubectl apply -f k8s/service.yaml --validate=false
+                        # Replace placeholders in deployment.yaml
+                        sudo -u ec2-user sed -i "s|YOUR_DOCKERHUB_USERNAME|${DOCKERHUB_USERNAME}|g" k8s/deployment.yaml
+                        sudo -u ec2-user sed -i "s|:latest|:${IMAGE_TAG}|g" k8s/deployment.yaml
 
-                # Wait for rollout
-                sudo -u ec2-user kubectl rollout status deployment/trend-app-deployment -n trend-app --timeout=300s
+                        # Apply Kubernetes manifests
+                        sudo -u ec2-user kubectl apply -f k8s/namespace.yaml --validate=false
+                        sudo -u ec2-user kubectl apply -f k8s/deployment.yaml --validate=false
+                        sudo -u ec2-user kubectl apply -f k8s/service.yaml --validate=false
 
-                # Show deployment status
-                sudo -u ec2-user kubectl get pods -n trend-app
-                sudo -u ec2-user kubectl get service trend-app-service -n trend-app
-            '''
+                        # Wait for rollout
+                        sudo -u ec2-user kubectl rollout status deployment/trend-app-deployment -n trend-app --timeout=300s
+
+                        # Show deployment status
+                        sudo -u ec2-user kubectl get pods -n trend-app
+                        sudo -u ec2-user kubectl get service trend-app-service -n trend-app
+                    '''
+                }
+            }
         }
     }
-}
-    
+
     post {
         always {
             sh 'docker rmi ${DOCKERHUB_USERNAME}/${IMAGE_NAME}:${IMAGE_TAG} || true'
