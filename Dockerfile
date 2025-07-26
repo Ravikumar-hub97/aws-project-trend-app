@@ -1,14 +1,17 @@
-# Use official Nginx base image
-FROM nginx:alpine
+# Use a lightweight image to serve static files
+FROM node:20-alpine
 
-# Remove default nginx static files
-RUN rm -rf /usr/share/nginx/html/*
+# Install a static file server (serve)
+RUN npm install -g serve
 
-# Copy built static site to nginx folder
-COPY dist/ /usr/share/nginx/html
+# Set working directory
+WORKDIR /app
 
-# Expose port 80
-EXPOSE 80
+# Copy the already built static files
+COPY dist/ .
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Expose port
+EXPOSE 3000
+
+# Start the static server
+CMD ["serve", "-s", ".", "-l", "3000"]

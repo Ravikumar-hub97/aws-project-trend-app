@@ -36,35 +36,34 @@ pipeline {
         }
         
 stage('Deploy to Kubernetes') {
-            steps {
-                script {
-                    sh '''
-                        # Configure kubectl for EKS
-                        aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name trend-app-cluster
-                        
-                        # Verify connection
-                        kubectl get nodes
-                        
-                        # Update deployment with new image
-                        sed -i "s|YOUR_DOCKERHUB_USERNAME|${DOCKERHUB_USERNAME}|g" k8s/deployment.yaml
-                        sed -i "s|:latest|:${IMAGE_TAG}|g" k8s/deployment.yaml
-                        
-                        # Apply Kubernetes manifests
-                        kubectl apply -f k8s/namespace.yaml --validate=false
-                        kubectl apply -f k8s/deployment.yaml --validate=false
-                        kubectl apply -f k8s/service.yaml --validate=false
-                        
-                        # Wait for rollout
-                        kubectl rollout status deployment/trend-app-deployment -n trend-app --timeout=300s
-                        
-                        # Show deployment status
-                        kubectl get pods -n trend-app
-                        kubectl get service trend-app-service -n trend-app
-                    '''
-                }
-            }
+    steps {
+        script {
+            sh '''
+                # Use ec2-user environment where kubectl works
+                sudo -u ec2-user aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name trend-app-cluster
+
+                # Verify connection
+                sudo -u ec2-user kubectl get nodes
+
+                # Replace placeholders in deployment.yaml
+                sudo -u ec2-user sed -i "s|YOUR_DOCKERHUB_USERNAME|${DOCKERHUB_USERNAME}|g" k8s/deployment.yaml
+                sudo -u ec2-user sed -i "s|:latest|:${IMAGE_TAG}|g" k8s/deployment.yaml
+
+                # Apply Kubernetes manifests
+                sudo -u ec2-user kubectl apply -f k8s/namespace.yaml --validate=false
+                sudo -u ec2-user kubectl apply -f k8s/deployment.yaml --validate=false
+                sudo -u ec2-user kubectl apply -f k8s/service.yaml --validate=false
+
+                # Wait for rollout
+                sudo -u ec2-user kubectl rollout status deployment/trend-app-deployment -n trend-app --timeout=300s
+
+                # Show deployment status
+                sudo -u ec2-user kubectl get pods -n trend-app
+                sudo -u ec2-user kubectl get service trend-app-service -n trend-app
+            '''
         }
     }
+}
     
     post {
         always {
