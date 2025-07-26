@@ -5,14 +5,15 @@ pipeline {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
         DOCKERHUB_USERNAME = 'ravikumar1997'
         IMAGE_NAME = 'trend-app'
-        IMAGE_TAG = "latest"
+        IMAGE_TAG = 'latest'
         AWS_DEFAULT_REGION = 'us-east-1'
+        CLUSTER_NAME = 'trend-app-cluster'
     }
     
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Ravikumar-hub97/aws-project-trend-app.git'
+                git branch: 'main', url: 'https://github.com/Vennilavan12/Trend.git'
             }
         }
         
@@ -39,14 +40,20 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        # Configure kubectl for EKS
+                        aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name ${CLUSTER_NAME}
+                        
+                        # Verify connection
+                        kubectl get nodes
+                        
                         # Update deployment with new image
                         sed -i "s|YOUR_DOCKERHUB_USERNAME|${DOCKERHUB_USERNAME}|g" k8s/deployment.yaml
-                        sed -i "s|latest|${IMAGE_TAG}|g" k8s/deployment.yaml
+                        sed -i "s|:latest|:${IMAGE_TAG}|g" k8s/deployment.yaml
                         
                         # Apply Kubernetes manifests
-                        kubectl apply -f k8s/namespace.yaml
-                        kubectl apply -f k8s/deployment.yaml
-                        kubectl apply -f k8s/service.yaml
+                        kubectl apply -f k8s/namespace.yaml --validate=false
+                        kubectl apply -f k8s/deployment.yaml --validate=false
+                        kubectl apply -f k8s/service.yaml --validate=false
                         
                         # Wait for rollout
                         kubectl rollout status deployment/trend-app-deployment -n trend-app --timeout=300s
